@@ -1,0 +1,52 @@
+#!/usr/bin/env python3
+import os
+import stat
+import datetime
+import argparse
+import pwd
+
+
+def get_file_info(path):
+    try:
+        stat_info = os.stat(path)
+        owner = pwd.getpwuid(os.getuid()).pw_name
+        permissions = stat.filemode(stat_info.st_mode)
+        modified_time = datetime.datetime.fromtimestamp(
+            stat_info.st_mtime).strftime('%d-%m-%Y %H:%M:%S')
+        return owner, permissions, modified_time
+    except Exception as e:
+        print(f"Error: {e}")
+        return None, None, None
+
+
+def list_files(directory, recursive=False):
+    if os.path.isdir(directory):
+        for dirpath, dirnames, filenames in os.walk(directory):
+            for filename in filenames:
+                path = os.path.join(dirpath, filename)
+                owner, permissions, modified_time = get_file_info(path)
+                if owner is not None:
+                    print(f"{owner}\t{permissions}\t{modified_time}\t{path}")
+            if not recursive:
+                break
+    else:
+        owner, permissions, modified_time = get_file_info(directory)
+        if owner is not None:
+            print(f"{owner}\t{permissions}\t{modified_time}\t{directory}")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description='mini-ls - A simple ls implementation in Python')
+
+    parser.add_argument('-r',
+                        action='store_true',
+                        help='Run recursively on any directory it comes across')
+    parser.add_argument('files',
+                        nargs='*',
+                        default=['.'],
+                        help='Paths to list information about (default is current directory)')
+
+    args = parser.parse_args()
+    for path in args.files:
+        list_files(path, args.r)

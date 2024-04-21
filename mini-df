@@ -1,0 +1,55 @@
+#!/usr/bin/env python3
+import os
+import argparse
+
+
+def get_disk_usage(path='.'):
+    try:
+        total, used, free = map(int, os.statvfs(path)[3:6])
+        return total, used, free
+    except FileNotFoundError:
+        print('Path provided does not exist')
+        quit()
+
+
+def bytes_to_human_readable(size):
+    suffixes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
+    index = 0
+    while size >= 1024 and index < len(suffixes) - 1:
+        size /= 1024
+        index += 1
+    return f"{size:.2f} {suffixes[index]}"
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description='mini-df - A simple df implementation in Python')
+    parser = argparse.ArgumentParser(add_help=False)
+
+    parser.add_argument('-?',
+                        '--help',
+                        action='help',
+                        help='Show this help message and exit')
+    parser.add_argument('-h',
+                        '--human-readable',
+                        action='store_true',
+                        help='output in human-readable format')
+    parser.add_argument('path',
+                        nargs='*',
+                        default='.',
+                        help='path(s) to get disk usage (default: current directory)')
+    args = parser.parse_args()
+
+    for path in args.path:
+        total, used, free = get_disk_usage(path)
+        if args.human_readable:
+            total = bytes_to_human_readable(total)
+            used = bytes_to_human_readable(used)
+            free = bytes_to_human_readable(free)
+            print(f"Total: {total}, Used: {used}, Free: {free} ({path})")
+        else:
+            print(f"Total: {total} Bytes, Used: {used} Bytes, Free: {free} Bytes ({path})")
+
+
+if __name__ == "__main__":
+    main()
